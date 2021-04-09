@@ -1,0 +1,400 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Creating a Plugin &mdash; AppExe External Service 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/werkzeug.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="AppExe External Service 0.1 documentation" href="index.html" />
+    <link rel="prev" title="AppExe External Service" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="index.html" title="AppExe External Service"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">AppExe External Service 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="creating-a-plugin">
+<h1>Creating a Plugin<a class="headerlink" href="#creating-a-plugin" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>This post provides a quick starting guide for creating a plugin to
+communicate with AppExe external service module.</p>
+</div>
+<div class="section" id="pre-requisites">
+<h2>Pre-requisites<a class="headerlink" href="#pre-requisites" title="Permalink to this headline">¶</a></h2>
+<p>This guide assumes basic familiarity with the following concepts and
+frameworks &#8211; <a class="reference external" href="http://maven.apache.org">Maven</a>,
+<a class="reference external" href="http://oauth.net">OAuth</a> and <a class="reference external" href="http://www.springsource.org/spring-social">Spring
+Social</a>.</p>
+</div>
+<div class="section" id="the-steps">
+<h2>The Steps<a class="headerlink" href="#the-steps" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="create-an-application-with-the-service-provider">
+<h3>1. Create an application with the service provider.<a class="headerlink" href="#create-an-application-with-the-service-provider" title="Permalink to this headline">¶</a></h3>
+<p>Each service provider will have their own sites where you can create an
+application, e.g. <a class="reference external" href="https://dev.twitter.com/apps">Twitter</a> or
+<a class="reference external" href="https://developers.facebook.com/apps">Facebook</a>.</p>
+<div class="figure align-center">
+<img alt="Create application page for Twitter" src="_images/create_application_twitter.png" />
+<p class="caption">Create application page for Twitter</p>
+</div>
+<p>You will be asked to enter some information about the app, such as
+application name and description, your company&#8217;s website and a callback
+URL. For the callback URL, please use the following format:</p>
+<div class="highlight-python"><pre>https://&lt;domain_name&gt;:8181/commapi/extsvc/authenticate?servicename=&lt;service_id&gt;</pre>
+</div>
+<p>NOTES:</p>
+<ul class="simple">
+<li>The domain name refers to the domain name where your application is
+hosted.</li>
+<li>The service ID will be used by the AppExe main system to identify
+your plugin. Please choose a name that is unique for that domain. You
+may re-use the same name if you intend to use the same plugin in a
+different domain.</li>
+</ul>
+<p>Once created, you will be presented with a few settings parameters.
+Generally, the plugin will only use three parameters, namely, <strong>API
+key</strong>, <strong>API secret</strong> and <strong>callback URL</strong>. Note that different service
+providers may use different terms for the parameters, but they basically
+refer to the same things.</p>
+</div>
+<div class="section" id="modify-the-access-permission-level-for-the-application">
+<h3>2. Modify the access/permission level for the application.<a class="headerlink" href="#modify-the-access-permission-level-for-the-application" title="Permalink to this headline">¶</a></h3>
+<p>Each newly-registered application is typically assigned a basic
+permission level on what kind of information that it is allowed to
+access. If you need additional permissions, such as posting to the
+timeline or uploading images, then you will need to modify the
+permission settings accordingly.</p>
+<div class="figure align-center">
+<img alt="Application access level for Twitter" src="_images/access_level_twitter.png" />
+<p class="caption">Application access level for Twitter</p>
+</div>
+</div>
+<div class="section" id="clone-the-plugin-template">
+<h3>3. Clone the plugin template.<a class="headerlink" href="#clone-the-plugin-template" title="Permalink to this headline">¶</a></h3>
+<p>We have created a <a class="reference external" href="https://github.com/mobilousinc/appexe-commapi-ext-plugin">plugin
+template</a>
+that you can use as a starting point. The template is created as a Maven
+project and can be imported to your favourite Java IDE easily.</p>
+<p>The template consists of the following classes/interfaces:</p>
+<ol class="arabic simple">
+<li><strong>PluginService</strong>: the interface that defines the methods that need
+to be implemented.</li>
+<li><strong>PluginServiceConfig</strong>: contains the settings parameters required to
+gain access to the service provider.</li>
+<li><strong>PluginServiceImpl</strong>: contains the main implementation for the
+communication with the service provider.</li>
+<li><strong>Schema</strong>: defines the database schema for the service.</li>
+<li><strong>Constant</strong>: contains the constants that are recognised by the
+AppExe system.</li>
+<li><strong>DatasetKey</strong>: contains the dataset keys that are recognised by the
+AppExe system.</li>
+<li><strong>DataType</strong>: contains the five data types that are recognised by the
+AppExe system.</li>
+<li><strong>HeterogeneousMap</strong>: basically a cleaner-looking version of
+Map&lt;String, Object&gt;.</li>
+</ol>
+<p>From the classes/interfaces listed above, you would only need to modify
+three of them: <strong>PluginServiceConfig</strong>, <strong>Schema</strong> and
+<strong>PluginServiceImpl</strong> to get a working plugin, as described below.</p>
+</div>
+<div class="section" id="modify-the-project-object-model-pom">
+<h3>4. Modify the Project Object Model (POM).<a class="headerlink" href="#modify-the-project-object-model-pom" title="Permalink to this headline">¶</a></h3>
+<p>The Maven POM is an XML file that contains information about the project
+and configuration details used by Maven to build the project.</p>
+<p>The resulting build (JAR file) is the plugin itself. The file will be
+named after the artifact ID, so it may be a good idea to rename it to a
+name that matches the service name.</p>
+<p>For example, from</p>
+<div class="highlight-python"><pre>&lt;artifactId&gt;appexe-commapi-ext-plugin&lt;/artifactId&gt;</pre>
+</div>
+<p>to</p>
+<div class="highlight-python"><pre>&lt;artifactId&gt;appexe-commapi-ext-plugin-twitter&lt;/artifactId&gt;</pre>
+</div>
+<p>While it it is definitely possible to write your own methods to access
+the external service APIs, the team at Spring Source has created the
+<a class="reference external" href="http://www.springsource.org/spring-social">Spring Social</a> extension
+that allows for access to the external services via various third party
+libraries. We encourage the plugin developers to make use of those
+libraries.</p>
+</div>
+<div class="section" id="modify-the-plugin-configuration-in-pluginserviceconfig">
+<h3>5. Modify the plugin configuration in PluginServiceConfig.<a class="headerlink" href="#modify-the-plugin-configuration-in-pluginserviceconfig" title="Permalink to this headline">¶</a></h3>
+<p>Enter the settings parameters of the application that you just created.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">MY_DOMAIN_NAME</span><span class="p">(</span><span class="s">&quot;my-service.mobilous.com&quot;</span><span class="p">),</span>
+<span class="n">MY_SERVICE_NAME</span><span class="p">(</span><span class="s">&quot;my_service_name&quot;</span><span class="p">),</span>
+<span class="n">MY_API_KEY</span><span class="p">(</span><span class="s">&quot;my_api_key&quot;</span><span class="p">),</span>
+<span class="n">MY_SECRET_KEY</span><span class="p">(</span><span class="s">&quot;my_secret_key&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>NOTES:</p>
+<ul class="simple">
+<li>The domain name and the service ID must be the same as the ones that
+you defined in the callback URL above.</li>
+<li>The callback URL in PluginServiceConfig has been formatted to take in
+the values defined above. Please do not modify it unless you are sure
+of what you are doing.</li>
+</ul>
+</div>
+<div class="section" id="define-the-database-schema-in-schema">
+<h3>6. Define the database schema in Schema.<a class="headerlink" href="#define-the-database-schema-in-schema" title="Permalink to this headline">¶</a></h3>
+<p>The plugin treats the contents from the external service as a collection
+of data items contained in a relational database. Therefore, it is
+essential to map them into database tables and fields. They have been
+defined as Java enums in the Schema class to make it easier to reference
+from other classes.</p>
+<div class="highlight-python"><pre>public enum Table {
+    TABLE_01("table_01_name", table01Schema),
+    TABLE_02("table_02_name", table02Schema)
+    ...
+
+}
+
+public enum Field {
+    FIELD_01("field_01"),
+    FIELD_02("field_02")
+    ...
+
+}
+
+private static final HeterogeneousMap table01Schema;
+static {
+    List&lt;String&gt; booleanFields = Arrays.asList(Field.FIELD_01.getValue());
+    List&lt;String&gt; dateFields = Arrays.asList(Field.FIELD_02.getValue());
+    List&lt;String&gt; integerFields = Arrays.asList(Field.FIELD_03.getValue());
+    List&lt;String&gt; realFields = Arrays.asList(Field.FIELD_04.getValue());
+    List&lt;String&gt; textFields = Arrays.asList(Field.FIELD_05.getValue());
+
+    HeterogeneousMap schema = new HeterogeneousMap();
+    schema.put(DataType.BOOLEAN.getValue(), booleanFields, List.class);
+    schema.put(DataType.DATE.getValue(), dateFields, List.class);
+    schema.put(DataType.INTEGER.getValue(), integerFields, List.class);
+    schema.put(DataType.REAL.getValue(), realFields, List.class);
+    schema.put(DataType.TEXT.getValue(), textFields, List.class);
+
+    table01Schema = schema;
+};
+
+...</pre>
+</div>
+</div>
+<div class="section" id="write-the-implementation-in-pluginserviceimpl">
+<h3>7. Write the implementation in PluginServiceImpl.<a class="headerlink" href="#write-the-implementation-in-pluginserviceimpl" title="Permalink to this headline">¶</a></h3>
+<p>There are currently seven methods that need to be implemented:</p>
+<ol class="arabic simple">
+<li><strong>getServiceName</strong>: set the service name and authorization URL. This
+will be used by AppExe Console to retrieve the schema via the service
+API. Leave the authorization as &#8220;null&#8221; if the schema is defined by
+the plugin developers themselves.</li>
+<li><strong>authenticate</strong>: perform authentication with the service provider to
+gain access to protected areas.</li>
+<li><strong>getSchema</strong>: obtain a representation of the collection of data
+items as a relational database.</li>
+<li><strong>create</strong>: create new content.</li>
+<li><strong>read</strong>: retrieve existing contents.</li>
+<li><strong>update</strong>: modify existing contents.</li>
+<li><strong>delete</strong>: delete existing contents.</li>
+</ol>
+</div>
+</div>
+<div class="section" id="plugin-sample">
+<h2>Plugin Sample<a class="headerlink" href="#plugin-sample" title="Permalink to this headline">¶</a></h2>
+<p>To better help plugin developers understand how to build on the
+template, we have created a <a class="reference external" href="https://github.com/mobilousinc/appexe-commapi-plugin-twitter-sample">sample plugin for Twitter
+service</a>.
+The sample plugin demonstrates how to implement the OAuth
+authentication, retrieve user&#8217;s recent tweets, post a tweet and delete a
+tweet.</p>
+<p>The sequence of the Git commits follows closely the steps described
+above. You may want to use a <a class="reference external" href="http://git-scm.com/downloads/guis">GUI-based Git
+client</a> to have a better
+visualisation on how the source code evolves with each commit.</p>
+<div class="figure align-center">
+<img alt="Changes made to a source file as shown on GitX (L)" src="_images/gitx_file_diff.png" />
+<p class="caption">Changes made to a source file as shown on GitX (L)</p>
+</div>
+<div class="section" id="note-on-heterogeneousmap">
+<h3>Note on HeterogeneousMap<a class="headerlink" href="#note-on-heterogeneousmap" title="Permalink to this headline">¶</a></h3>
+<p>As described above, HeterogeneousMap is basically a cleaner-looking
+version of Map&lt;String, Objects&gt;. The data type of the values is passed
+as an argument when adding and retrieving them, for example:</p>
+<div class="highlight-python"><pre>map.put(key, arrayA, List.class);
+
+List arrayA = map.get(key, List.class);</pre>
+</div>
+<p>Since most values are generally of data type String, these values can be
+added or retrieved without specifying it as a String:</p>
+<div class="highlight-python"><pre>map.put(key, stringA);
+
+String stringA = map.get(key);</pre>
+</div>
+</div>
+<div class="section" id="authenticate">
+<h3>authenticate<a class="headerlink" href="#authenticate" title="Permalink to this headline">¶</a></h3>
+<p>The first and most important method to implement is the <strong>authenticate</strong>
+method. The objective is to obtain some kind of login credentials that
+can be used to access protected areas of the service.</p>
+<p>The Twitter sample plugin shows the implementation of <a class="reference external" href="https://dev.twitter.com/docs/auth/oauth">OAuth
+1.0</a>, which involves two
+steps, namely, accessing the website via an <strong>authorize_url</strong> to obtain
+an <strong>oauth_verifier</strong>, which can subsequently be exchanged for an
+<strong>access token</strong>, which is the login credential that we are looking for.</p>
+<div class="highlight-python"><pre>HeterogeneousMap retVal = new HeterogeneousMap();
+if (dataset.get("oauth_verifier") == null) {
+    OAuth1Operations oauthOperations = connectionFactory.getOAuthOperations();
+    OAuthToken requestToken = oauthOperations.fetchRequestToken(callbackURL, null);
+
+    retVal.put("request_token", requestToken, OAuthToken.class);
+    retVal.put("authorize_url", oauthOperations.buildAuthorizeUrl(requestToken.getValue(), OAuth1Parameters.NONE));
+} else {
+    OAuthToken requestToken = dataset.get("request_token", OAuthToken.class);
+    String oauthToken = dataset.get("oauth_verifier");
+    OAuth1Operations oauthOperations = connectionFactory.getOAuthOperations();
+    OAuthToken accessToken = oauthOperations.exchangeForAccessToken(new AuthorizedRequestToken(requestToken, oauthToken), null);
+
+    retVal.put("auth_type", "OAuth1");
+    retVal.put("user_connection", accessToken, OAuthToken.class);
+}
+
+return retVal;</pre>
+</div>
+<p>The sample uses the <a class="reference external" href="http://static.springsource.org/spring-social/docs/1.0.x/reference/html/serviceprovider.html">Twitter
+module</a>
+from the Spring Social project, which simplifies the implementation
+greatly by delegating the HTTP request-response handling to the Twitter
+module.</p>
+</div>
+<div class="section" id="getschema">
+<h3>getSchema<a class="headerlink" href="#getschema" title="Permalink to this headline">¶</a></h3>
+<p>This is the method that is used by the AppExe main system in order to
+obtain a representation of the collection of data items as a relational
+database.</p>
+</div>
+<div class="section" id="create-read-update-and-delete-crud">
+<h3>create, read, update and delete (CRUD)<a class="headerlink" href="#create-read-update-and-delete-crud" title="Permalink to this headline">¶</a></h3>
+<p>These are the methods for accessing the contents on the service
+provider. Using the Twitter sample again, the typical procedure is to
+use the <strong>access token</strong> that we obtained from the authentication method
+above, and use it to create a connection with the service provider.
+Using the connection, we can instantiate the object that we can use to
+perform various API calls to the service provider.</p>
+<div class="highlight-python"><pre>OAuthToken accessToken = dataset.get(DatasetKey.ACCESS_TOKEN.getKey(), OAuthToken.class);
+Connection&lt;Twitter&gt; connection = connectionFactory.createConnection(accessToken);
+Twitter twitter = connection.getApi();</pre>
+</div>
+</div>
+</div>
+<div class="section" id="references">
+<h2>References<a class="headerlink" href="#references" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><a class="reference external" href="https://code.google.com/p/jspf/">Java Simple Plugin Framework</a></li>
+<li><a class="reference external" href="http://www.springsource.org/spring-social">Spring Social |
+SpringSource.org</a></li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="index.html">
+              <img class="logo" src="_static/mobilous_logo.png" alt="Logo"/>
+            </a></p>
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Creating a Plugin</a><ul>
+<li><a class="reference internal" href="#introduction">Introduction</a></li>
+<li><a class="reference internal" href="#pre-requisites">Pre-requisites</a></li>
+<li><a class="reference internal" href="#the-steps">The Steps</a><ul>
+<li><a class="reference internal" href="#create-an-application-with-the-service-provider">1. Create an application with the service provider.</a></li>
+<li><a class="reference internal" href="#modify-the-access-permission-level-for-the-application">2. Modify the access/permission level for the application.</a></li>
+<li><a class="reference internal" href="#clone-the-plugin-template">3. Clone the plugin template.</a></li>
+<li><a class="reference internal" href="#modify-the-project-object-model-pom">4. Modify the Project Object Model (POM).</a></li>
+<li><a class="reference internal" href="#modify-the-plugin-configuration-in-pluginserviceconfig">5. Modify the plugin configuration in PluginServiceConfig.</a></li>
+<li><a class="reference internal" href="#define-the-database-schema-in-schema">6. Define the database schema in Schema.</a></li>
+<li><a class="reference internal" href="#write-the-implementation-in-pluginserviceimpl">7. Write the implementation in PluginServiceImpl.</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#plugin-sample">Plugin Sample</a><ul>
+<li><a class="reference internal" href="#note-on-heterogeneousmap">Note on HeterogeneousMap</a></li>
+<li><a class="reference internal" href="#authenticate">authenticate</a></li>
+<li><a class="reference internal" href="#getschema">getSchema</a></li>
+<li><a class="reference internal" href="#create-read-update-and-delete-crud">create, read, update and delete (CRUD)</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#references">References</a></li>
+</ul>
+</li>
+</ul>
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">AppExe External Service</a></li>
+  </ul></li>
+</ul>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/create-plugin-quick-guide.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+	<div class="footer">
+		&copy; 2012, Mobilous Inc.
+		Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3. with <a href="http://werkzeug.pocoo.org/docs/">Werkzeug</a> theme.
+	</div>
+
+  </body>
+</html>
